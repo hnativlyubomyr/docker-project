@@ -1,6 +1,6 @@
 <template>
   <select
-      v-model="modelValue"
+      v-model="value"
       class="select"
       @change="handleChangeValue"
   >
@@ -32,11 +32,22 @@ export default {
       default: () => [],
     }
   },
+
+  data() {
+    return {
+      value: '',
+    }
+  },
+
   methods: {
     handleChangeValue(event) {
       this.$emit('update:modelValue', event.target.value);
     }
-  }
+  },
+
+  mounted() {
+    this.value = this.modelValue;
+  },
 }
 </script>
 
