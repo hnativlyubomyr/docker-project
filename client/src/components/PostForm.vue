@@ -6,7 +6,7 @@
         v-model="title"
         class="input"
         placeholder="Post title"
-        @input="validationTitleMessage = ''"
+        @input="setValidationTitleMessage(null)"
     ></my-input>
 
     <span v-if="validationTitleMessage" class="validation-message">{{ validationTitleMessage }}</span>
@@ -36,7 +36,7 @@
 </template>
 
 <script>
-  import postsService from "@/services/PostService";
+  import { mapActions, mapState, mapMutations } from "vuex";
 
   export default {
     props: {
@@ -46,11 +46,16 @@
       }
     },
 
+    computed: {
+      ...mapState({
+        validationTitleMessage: state => state.posts.validationTitleMessage,
+      })
+    },
+
     data() {
       return {
         title: '',
         body: '',
-        validationTitleMessage: '',
       }
     },
 
@@ -66,6 +71,15 @@
     },
 
     methods: {
+      ...mapMutations({
+        setValidationTitleMessage: 'posts/setValidationTitleMessage',
+      }),
+
+      ...mapActions({
+        addNewPost: 'posts/addNewPost',
+        updateExistPost: 'posts/updateExistPost',
+      }),
+
       async sendPost() {
         const { title, body } = this;
 
@@ -73,19 +87,15 @@
 
         const post = { title, body };
 
-        try {
-          const response = this.updatePost
-              ? await postsService.updatePost({ ...post, _id: this.updatePost._id })
-              : await postsService.addPost(post);
-
-          this.$emit('sendPost', response.data);
-          this.clearForm();
+        if (this.updatePost) {
+          await this.updateExistPost({ ...post, _id: this.updatePost._id })
+        } else {
+          await this.addNewPost(post);
         }
-        catch (e) {
-          console.log(e);
-          if (e.response.status === 403) {
-            this.validationTitleMessage = e.response.data;
-          }
+
+        if (!this.validationTitleMessage) {
+          this.$emit('sendPost');
+          this.clearForm();
         }
       },
 

@@ -17,7 +17,7 @@ export default {
       type: String,
       default: 'white',
       validator(value) {
-        return ['green', 'red', 'blue'].includes(value)
+        return ['green', 'red', 'blue', 'white'].includes(value)
       }
     },
 

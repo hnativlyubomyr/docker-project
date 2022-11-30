@@ -44,7 +44,6 @@
       <posts-list
           v-if="!isFirstLoading"
           :posts="filteringPost"
-          ref="postsList"
           @action-item="handleActionItem"
       >
       </posts-list>
