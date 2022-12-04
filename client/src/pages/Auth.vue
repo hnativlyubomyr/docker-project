@@ -3,7 +3,7 @@
     <div v-if="isRegister" class="auth-title">Create an account</div>
     <div v-else class="auth-title">Sign in to UsersPosts</div>
 
-    <form class="auth-form">
+    <form class="auth-form" autocomplete="off">
       <div v-if="isRegister" class="form-group">
         <label for="user-name">Name:</label>
         <my-input
@@ -70,6 +70,8 @@
         </my-button>
 
         <router-link v-if="!isRegister" to="/register" class="user-link">Create an account</router-link>
+
+        <router-link v-if="isRegister" to="/login" class="user-link">Sign In</router-link>
       </div>
     </form>
   </div>
@@ -145,9 +147,6 @@ export default {
   methods: {
     isSignInFormValid() {
       let isValid = true;
-
-      const loginHandler = this.authFormValid.login.handler();
-      console.log(loginHandler);
 
       if (!this.authFormValid.login.handler()) {
         this.authFormValid.login.isValid = false;
