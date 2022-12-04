@@ -1,7 +1,7 @@
 <template>
   <input
       class="input"
-      type="text"
+      :type="type"
       :value="modelValue"
       @input="emitValue"
   />
@@ -13,6 +13,13 @@ export default {
 
   props: {
     modelValue: [String, Number],
+    type: {
+      type: String,
+      default: 'text',
+      validator(value) {
+        return ['password', 'email', 'text'].includes(value)
+      }
+    },
   },
 
   emits: ['update:modelValue'],
