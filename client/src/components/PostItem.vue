@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import postsService from "@/services/PostService";
+import { mapActions } from "vuex";
 
 export default {
   props: {
@@ -33,24 +33,21 @@ export default {
   emits: ['actionItem'],
 
   methods: {
-    async actionItem(event) {
+    ...mapActions({
+      deletePost: 'posts/deletePost'
+    }),
+
+    actionItem(event) {
       const isDelete = event.target.hasAttribute('data-delete');
       const { _id } = this.post;
-      const data = { _id, isDelete };
 
       if (isDelete) {
-        try {
-          await postsService.deletePost(_id);
-          this.$emit('actionItem', data);
+        this.deletePost(_id);
 
-          return;
-        }
-        catch (e) {
-          console.log(e);
-        }
+        return;
       }
 
-      this.$emit('actionItem', data);
+      this.$emit('actionItem', { _id });
     }
   }
 }

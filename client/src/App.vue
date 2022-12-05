@@ -1,10 +1,10 @@
 <template>
   <div class="main">
     <div class="navigation-panel">
-      <my-input v-model="searchValue" placeholder="Filtering..."></my-input>
+      <my-input v-model="searchValueModel" placeholder="Filtering..."></my-input>
 
       <my-select
-          v-model="sortValue"
+          v-model="sortValueModel"
           class="select-sorting"
           default-text="Sorting posts"
           :options="sortOptions"
@@ -25,7 +25,7 @@
       <template v-slot:default>
         <post-form
             :update-post="updatePost"
-            @send-post="handleSendPost"
+            @send-post="isOpenDialog = false"
         >
         </post-form>
       </template>
@@ -44,7 +44,6 @@
       <posts-list
           v-if="!isFirstLoading"
           :posts="filteringPost"
-          ref="postsList"
           @action-item="handleActionItem"
       >
       </posts-list>
@@ -55,7 +54,7 @@
     <my-button
         v-if="!isAllPosts"
         class="load-more-button"
-        @click="fetchPosts(page, limit, isAllPosts);"
+        @click="fetchPosts(fetchPostsPayload);"
     >
       Load more...
     </my-button>
@@ -65,9 +64,9 @@
 </template>
 
 <script>
+  import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
   import PostsList from "./components/PostsList";
   import PostForm from "./components/PostForm";
-  import postsService from './services/PostService';
 
   export default {
     components: {
@@ -76,119 +75,85 @@
     },
 
     computed: {
-      sortPosts() {
-        return [...this.posts].sort((post1, post2) => {
-          return this.sortValue ? post1[this.sortValue].localeCompare(post2[this.sortValue]) : 0;
-        })
+      ...mapState({
+        posts: state => state.posts.posts,
+        page: state => state.posts.page,
+        limit: state => state.posts.limit,
+        updatePost: state => state.posts.updatePost,
+        isFirstLoading: state => state.posts.isFirstLoading,
+        isScrollLoading: state => state.posts.isScrollLoading,
+        isAllPosts: state => state.posts.isAllPosts,
+        sortValue: state => state.posts.sortValue,
+        searchValue: state => state.posts.searchValue,
+        sortOptions: state => state.posts.sortOptions,
+      }),
+
+      ...mapGetters({
+        filteringPost: 'posts/filteringPost',
+      }),
+
+      fetchPostsPayload() {
+        const _page = this.page;
+        const _limit = this.limit;
+        const isAllPosts = this.isAllPosts;
+
+        return { _page, _limit, isAllPosts };
+      }
+    },
+
+    watch: {
+      searchValueModel(value) {
+        this.setSearchValue(value);
       },
 
-      filteringPost() {
-        return [...this.sortPosts].filter(post => post.title.toLowerCase().includes(this.searchValue.toLowerCase()));
+      sortValueModel(value) {
+        this.setSortValue(value);
       }
     },
 
     data() {
       return {
-        posts: [],
-
-        page: 1,
-
-        limit: 10,
-
-        updatePost: false,
-
         isOpenDialog: false,
-
-        isFirstLoading: false,
-
-        isScrollLoading: false,
-
-        isAllPosts: false,
-
-        sortValue: '',
-
-        searchValue: '',
-
-        sortOptions: [
-          { value: 'title', name: 'By title' },
-          { value: 'body', name: 'By description' },
-        ],
-
-
+        searchValueModel: this.searchValue,
+        sortValueModel: this.sortValue,
       }
     },
 
     methods: {
-      handleSendPost(event) {
-        if (this.updatePost) {
-          const index = this.posts.findIndex(item => item._id === event._id);
+      ...mapMutations({
+        setSearchValue: 'posts/setSearchValue',
+        setSortValue: 'posts/setSortValue',
+        setPage: 'posts/setPage',
+        setUpdatePost: 'posts/setUpdatePost'
+      }),
 
-          this.posts.splice(index, 1, event);
-          this.updatePost = false;
-        } else {
-          this.posts.push(event);
-        }
-
-        this.isOpenDialog = false;
-      },
+      ...mapActions({
+        fetchPosts: 'posts/fetchPosts'
+      }),
 
       scroll() {
         window.onscroll = () => {
           const isLoading = this.isScrollLoading || this.isFirstLoading;
 
-          if(window.scrollY + window.innerHeight > document.body.clientHeight && !isLoading){
-            this.fetchPosts(this.page, this.limit, this.isAllPosts);
+          if (window.scrollY + window.innerHeight > document.body.clientHeight && !isLoading) {
+            this.fetchPosts(this.fetchPostsPayload);
           }
         }
       },
 
       async handleActionItem(event) {
-        if (event.isDelete) {
-          this.posts = this.posts.filter(item => item._id !== event._id);
-          this.page = 1;
-        } else {
-          this.isOpenDialog = true;
-          this.updatePost = null;
-          await this.$nextTick();
-          this.updatePost = this.posts.find(item => item._id === event._id);
-        }
-      },
+        this.isOpenDialog = true;
+        this.setUpdatePost(null);
+        await this.$nextTick();
 
-      async fetchPosts(_page, _limit, isAllPosts) {
-        if (isAllPosts) return;
+        const post = this.posts.find(item => item._id === event._id);
 
-        try {
-          if (_page === 1) {
-            this.isFirstLoading = true;
-          } else {
-            this.isScrollLoading = true;
-          }
-
-          const response = await postsService.fetchPosts(_page, _limit);
-          const filterPosts = response.data.filter(item => !this.posts.find(post => post._id === item._id));
-
-          this.posts = this.posts.concat(filterPosts);
-
-          const totalItems = response.headers['x-total-count'];
-
-          if (this.posts.length < totalItems) {
-            this.page++;
-          } else {
-            this.isAllPosts = true;
-          }
-        }
-        catch(e) {
-          console.log(e.code);
-        }
-        finally {
-          this.isFirstLoading = false;
-          this.isScrollLoading = false;
-        }
+        this.setUpdatePost(post);
       },
     },
 
     mounted() {
-      this.fetchPosts(this.page, this.limit, this.isAllPosts);
+      this.fetchPosts(this.fetchPostsPayload);
       this.scroll();
     },
   }
