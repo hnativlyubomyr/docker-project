@@ -3,9 +3,9 @@
     <div class="user-info">
       <div class="user-title">User information:</div>
 
-      <div class="user-text">Name: {{ name }}</div>
-      <div class="user-text">Username: {{ username }}</div>
-      <div class="user-text">Password: {{ password }}</div>
+      <div class="user-text">Name: {{ user.name }}</div>
+      <div class="user-text">Username: {{ user.username }}</div>
+      <div class="user-text">Password: {{ user.password }}</div>
 
       <my-button
           color-button="red"
@@ -20,15 +20,11 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapGetters } from "vuex";
 
 export default {
   computed: {
-    ...mapState({
-      name: state => state.auth.name,
-      username: state => state.auth.username,
-      password: state => state.auth.password,
-    }),
+    ...mapGetters('auth', ['user']),
   }
 }
 </script>

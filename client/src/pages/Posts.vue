@@ -1,10 +1,10 @@
 <template>
   <div class="main">
     <div class="navigation-panel">
-      <my-input v-model="searchValueModel" placeholder="Filtering..."></my-input>
+      <my-input v-model="searchValue" placeholder="Filtering..."></my-input>
 
       <my-select
-          v-model="sortValueModel"
+          v-model="sortValue"
           class="select-sorting"
           default-text="Sorting posts"
           :options="sortOptions"
@@ -24,7 +24,7 @@
 
       <template v-slot:default>
         <post-form
-            :update-post="updatePost"
+            :update-post="currentPost"
             @send-post="isOpenDialog = false"
         >
         </post-form>
@@ -54,7 +54,7 @@
     <my-button
         v-if="!isAllPosts"
         class="load-more-button"
-        @click="fetchPosts(fetchPostsPayload);"
+        @click="getPosts(fetchPostsPayload);"
     >
       Load more...
     </my-button>
@@ -64,7 +64,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapMutations, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapMutations } from 'vuex';
 import PostsList from "@/components/PostsList";
 import PostForm from "@/components/PostForm";
 
@@ -75,22 +75,17 @@ export default {
   },
 
   computed: {
-    ...mapState({
-      posts: state => state.posts.posts,
-      page: state => state.posts.page,
-      limit: state => state.posts.limit,
-      updatePost: state => state.posts.updatePost,
-      isFirstLoading: state => state.posts.isFirstLoading,
-      isScrollLoading: state => state.posts.isScrollLoading,
-      isAllPosts: state => state.posts.isAllPosts,
-      sortValue: state => state.posts.sortValue,
-      searchValue: state => state.posts.searchValue,
-      sortOptions: state => state.posts.sortOptions,
-    }),
+    ...mapGetters('posts', ['posts', 'page', 'totalItems', 'currentPost']),
 
-    ...mapGetters({
-      filteringPost: 'posts/filteringPost',
-    }),
+    sortPosts() {
+      return [...this.posts].sort((post1, post2) => {
+        return this.sortValue ? post1[this.sortValue].localeCompare(post2[this.sortValue]) : 0;
+      })
+    },
+
+    filteringPost() {
+      return [...this.sortPosts].filter(post => post.title.toLowerCase().includes(this.searchValue.toLowerCase()));
+    },
 
     fetchPostsPayload() {
       const _page = this.page;
@@ -101,59 +96,74 @@ export default {
     }
   },
 
-  watch: {
-    searchValueModel(value) {
-      this.setSearchValue(value);
-    },
-
-    sortValueModel(value) {
-      this.setSortValue(value);
-    }
-  },
-
   data() {
     return {
       isOpenDialog: false,
-      searchValueModel: this.searchValue,
-      sortValueModel: this.sortValue,
+      sortValue: '',
+      searchValue: '',
+      sortOptions: [
+        { value: 'title', name: 'By title' },
+        { value: 'body', name: 'By description' },
+      ],
+      limit: 10,
+      isFirstLoading: false,
+      isScrollLoading: false,
+      isAllPosts: false,
     }
   },
 
   methods: {
-    ...mapMutations({
-      setSearchValue: 'posts/setSearchValue',
-      setSortValue: 'posts/setSortValue',
-      setPage: 'posts/setPage',
-      setUpdatePost: 'posts/setUpdatePost'
-    }),
+    ...mapActions('posts', ['fetchPosts']),
 
-    ...mapActions({
-      fetchPosts: 'posts/fetchPosts'
-    }),
+    ...mapMutations('posts', ['setPage', 'setCurrentPost']),
+
+    getPosts(pageObj) {
+      const { _page, _limit, isAllPosts } = pageObj;
+
+      if (isAllPosts) return;
+
+      if (_page === 1) {
+        this.isFirstLoading = true
+      } else {
+        this.isScrollLoading = true;
+      }
+
+      this.fetchPosts({ _page, _limit})
+      .then(() => {
+        if (this.posts.length < this.totalItems) {
+          this.setPage(this.page + 1)
+        } else {
+          this.isAllPosts = true;
+        }
+      })
+      .finally(() => {
+        this.isFirstLoading = false;
+        this.isScrollLoading = false;
+      })
+    },
 
     scroll() {
       window.onscroll = () => {
         const isLoading = this.isScrollLoading || this.isFirstLoading;
 
         if (window.scrollY + window.innerHeight > document.body.clientHeight && !isLoading) {
-          this.fetchPosts(this.fetchPostsPayload);
+          this.getPosts(this.fetchPostsPayload);
         }
       }
     },
 
     async handleActionItem(event) {
       this.isOpenDialog = true;
-      this.setUpdatePost(null);
+      this.setCurrentPost(null);
+
       await this.$nextTick();
 
-      const post = this.posts.find(item => item._id === event._id);
-
-      this.setUpdatePost(post);
+      this.setCurrentPost(this.posts.find(item => item._id === event._id));
     },
   },
 
   mounted() {
-    this.fetchPosts(this.fetchPostsPayload);
+    this.getPosts(this.fetchPostsPayload);
     this.scroll();
   },
 }

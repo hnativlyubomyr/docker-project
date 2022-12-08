@@ -36,7 +36,7 @@
 </template>
 
 <script>
-  import { mapActions, mapState, mapMutations } from "vuex";
+  import { mapActions, mapGetters, mapMutations } from "vuex";
 
   export default {
     props: {
@@ -47,9 +47,7 @@
     },
 
     computed: {
-      ...mapState({
-        validationTitleMessage: state => state.posts.validationTitleMessage,
-      })
+      ...mapGetters('posts', ['validationTitleMessage']),
     },
 
     data() {
@@ -71,14 +69,8 @@
     },
 
     methods: {
-      ...mapMutations({
-        setValidationTitleMessage: 'posts/setValidationTitleMessage',
-      }),
-
-      ...mapActions({
-        addNewPost: 'posts/addNewPost',
-        updateExistPost: 'posts/updateExistPost',
-      }),
+      ...mapMutations('posts', ['setValidationTitleMessage']),
+      ...mapActions('posts', ['addNewPost', 'updateExistPost']),
 
       async sendPost() {
         const { title, body } = this;
