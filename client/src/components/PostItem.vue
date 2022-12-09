@@ -33,9 +33,7 @@ export default {
   emits: ['actionItem'],
 
   methods: {
-    ...mapActions({
-      deletePost: 'posts/deletePost'
-    }),
+    ...mapActions('posts', ['deletePost']),
 
     actionItem(event) {
       const isDelete = event.target.hasAttribute('data-delete');
