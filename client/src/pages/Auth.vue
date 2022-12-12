@@ -80,6 +80,7 @@
 <script>
 
 import { authValues } from "@/validators/validators";
+import { mapActions } from "vuex";
 
 export default {
   props: {
@@ -145,6 +146,8 @@ export default {
   },
 
   methods: {
+    ...mapActions('auth', ['createAccount', 'signIn']),
+
     isSignInFormValid() {
       let isValid = true;
 
@@ -196,13 +199,17 @@ export default {
     handleSignIn() {
       if (!this.isSignInFormValid()) return;
 
-      // todo SignIn Action
+      const { login: username, password } = this.authForm;
+      this.signIn({username, password });
+
     },
 
     handleRegister() {
       if (!this.isCreateAccountValid()) return;
 
-      // todo CreateAccount Action
+      const { name, login: username, password } = this.authForm;
+
+      this.createAccount({ name, username, password });
     }
   }
 }
