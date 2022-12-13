@@ -16,10 +16,6 @@ export default {
 
   methods: {
     ...mapActions('auth', ['authorization']),
-  },
-
-  mounted() {
-    this.authorization();
   }
 }
 </script>

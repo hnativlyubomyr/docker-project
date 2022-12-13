@@ -81,6 +81,7 @@
 
 import { authValues } from "@/validators/validators";
 import { mapActions } from "vuex";
+import { navigation } from "@/router/dictionary";
 
 export default {
   props: {
@@ -196,12 +197,13 @@ export default {
       return this.authForm.password === this.authForm.confirm;
     },
 
-    handleSignIn() {
+    async handleSignIn() {
       if (!this.isSignInFormValid()) return;
 
       const { login: username, password } = this.authForm;
-      this.signIn({username, password });
 
+      await this.signIn({username, password });
+      this.$router.push(navigation.posts.path)
     },
 
     handleRegister() {

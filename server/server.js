@@ -15,12 +15,14 @@ const session = require('express-session');
 
 const LocalStrategy = require('passport-local').Strategy
 
-app.use(session({
-    secret: "secret",
-    resave: false,
-    saveUninitialized: true,
-}));
-
+app.use(
+    session({
+        secret: "secret",
+        resave: false,
+        saveUninitialized: true,
+        cookie: { maxAge: 60 * 60 * 1000 }, // 1 hour
+    })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -29,21 +31,14 @@ app.use(morgan('combined'));
 app.use(bodyParser.json());
 
 const corsConfig = {
+    origin: "http://localhost:8080",
+    preflightContinue: true,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
     exposedHeaders: ['Content-Length', 'x-total-count'],
-    credential: true,
-    origin: true,
-}
+};
+
 app.use(cors(corsConfig));
-app.options('*', cors(corsConfig))
-
-app.use(function(req, res, next) {
-    res.header('Access-Control-Allow-Credentials', true);
-    res.header('Access-Control-Allow-Origin', req.headers.origin);
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-
-    next();
-});
 
 app.use('/', postsRouter);
 app.use('/', authRouter);
@@ -79,11 +74,26 @@ passport.deserializeUser((id, done) => {
     });
 })
 
-app.post ("/auth/login", cors(), passport.authenticate('local', {
-    successRedirect: "/auth/authorization",
-    failureRedirect: "/auth/login",
-    session: true,
-}))
+app.post('/auth/login', function(req, res, next) {
+    passport.authenticate('local', function (err, user, info) {
+        console.log('info:');
+        console.log(info);
+        if (err) {
+            return next(err);
+        }
+        if (!user) {
+            return res.redirect('/');
+        }
+
+        req.logIn(user, function (err) {
+            if (err) {
+                return next(err);
+            }
+            return res.send({ isAuth: true, user });
+        });
+
+    })(req, res, next);
+});
 
 app.get('/auth/authorization', (req, res) => {
     console.log('authorization request:');

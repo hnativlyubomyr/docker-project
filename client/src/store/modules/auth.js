@@ -48,7 +48,7 @@ export const auth = {
             try {
                 const response = await authService.signIn(payload);
                 commit('setIsAuth', true);
-                commit('setUser', response.data);
+                commit('setUser', response.data.user);
             }
             catch (e) {
                 console.log(e);
