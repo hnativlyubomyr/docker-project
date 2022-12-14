@@ -82,7 +82,7 @@ app.post('/auth/login', function(req, res, next) {
             return next(err);
         }
         if (!user) {
-            return res.redirect('/');
+            return res.status(403).send('Incorrect username or password!');
         }
 
         req.logIn(user, function (err) {
@@ -112,6 +112,12 @@ app.get('/auth/authorization', (req, res) => {
 
     res.send(obj);
 })
+
+app.get('/auth/logout', function(req, res, next){
+    req.session.destroy(function (err) {
+        res.send('logout user');
+    });
+});
 
 const startServer = () => {
     app.listen(port, () => {

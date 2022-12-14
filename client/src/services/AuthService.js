@@ -11,5 +11,9 @@ export default {
 
     authorization() {
       return Api().get('/auth/authorization');
+    },
+
+    logaut() {
+        return Api().get('/auth/logout');
     }
 }

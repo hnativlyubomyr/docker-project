@@ -11,6 +11,7 @@ export const auth = {
             password: null,
             name: null,
         },
+        errorMessage: '',
     }),
 
     mutations: {
@@ -20,8 +21,11 @@ export const auth = {
 
         setUser(state, user) {
             state.user = user;
-        }
+        },
 
+        setErrorMessage(state, message) {
+            state.errorMessage = message;
+        },
     },
 
     getters: {
@@ -30,6 +34,9 @@ export const auth = {
         },
         user(state) {
             return state.user;
+        },
+        errorMessage(state) {
+            return state.errorMessage;
         }
     },
 
@@ -51,7 +58,9 @@ export const auth = {
                 commit('setUser', response.data.user);
             }
             catch (e) {
-                console.log(e);
+                if (e.response.status === 403) {
+                    commit('setErrorMessage', e.response.data);
+                }
             }
         },
 
@@ -62,6 +71,17 @@ export const auth = {
                     commit('setIsAuth', response.data.isAuth);
                     commit('setUser', response.data.user);
                 }
+            }
+            catch (e) {
+                console.log(e);
+            }
+        },
+
+        async logOut({ state, commit }) {
+            try {
+                await authService.logaut();
+                commit('setIsAuth', false);
+                commit('setUser', null);
             }
             catch (e) {
                 console.log(e);
