@@ -6,8 +6,14 @@
         <div class="post-caption"><b>Description:</b> {{ post.body }}</div>
       </div>
       <div class="post-buttons" @click="actionItem">
-        <my-button color-button="blue">Update</my-button>
         <my-button
+            :disabled="isDisabledActions"
+            color-button="blue"
+        >
+          Update
+        </my-button>
+        <my-button
+            :disabled="isDisabledActions"
             color-button="red"
             class="post-action-btn"
             data-delete
@@ -20,7 +26,7 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   props: {
@@ -31,6 +37,14 @@ export default {
   },
 
   emits: ['actionItem'],
+
+  computed: {
+    ...mapGetters('auth', ['user', 'isAuth']),
+
+    isDisabledActions() {
+      return !this.isAuth || (this.user && this.post.user !== this.user._id)
+    }
+  },
 
   methods: {
     ...mapActions('posts', ['deletePost']),

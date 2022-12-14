@@ -44,9 +44,6 @@ app.use('/', postsRouter);
 app.use('/', authRouter);
 
 authUser = (username, password, done) => {
-    console.log('local-strategy');
-    console.log(`username: ${username}`);
-    console.log(`password: ${password}`);
     User.findOne({ username : username },function(err,user){
         return err
             ? done(err)
@@ -61,12 +58,10 @@ authUser = (username, password, done) => {
 passport.use(new LocalStrategy(authUser));
 
 passport.serializeUser( (user, done) => {
-    console.log('serialize user ---------------->');
     done(null, user._id);
 })
 
 passport.deserializeUser((id, done) => {
-    console.log(`deserialize: ${id} --------------------->`);
     User.findById(id, function(err,user){
         err
             ? done(err)

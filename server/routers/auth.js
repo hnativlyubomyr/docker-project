@@ -13,7 +13,7 @@ function sendErrorStatus(err, res) {
 
     if (err.code && err.code === 11000) {
         status = 403;
-        message = 'User with that name already exists!'
+        message = 'username or password already exist!'
     }
 
     if (err.errors) {

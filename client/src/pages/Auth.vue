@@ -222,7 +222,9 @@ export default {
 
       const { name, login: username, password } = this.authForm;
 
-      this.createAccount({ name, username, password });
+      this.createAccount({ name, username, password }).then(() => {
+        this.$router.push(navigation.login.path);
+      });
     }
   },
 

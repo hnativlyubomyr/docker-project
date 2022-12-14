@@ -47,9 +47,11 @@ export const auth = {
                 commit('addNewPost', response.data);
             }
             catch (e) {
-                console.log(e);
-            }
-        },
+                if (e.response.status === 403)
+                    commit('setErrorMessage', e.response.data);
+                    reject();
+                }
+            },
 
         async signIn({ state, commit }, payload) {
             try {

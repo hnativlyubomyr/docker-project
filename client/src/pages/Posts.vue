@@ -13,6 +13,7 @@
 
       <my-button
           color-button="green"
+          :disabled="!isAuth"
           @click="isOpenDialog = true"
       >
         Create Post
@@ -76,6 +77,7 @@ export default {
 
   computed: {
     ...mapGetters('posts', ['posts', 'page', 'totalItems', 'currentPost']),
+    ...mapGetters('auth', ['isAuth']),
 
     sortPosts() {
       return [...this.posts].sort((post1, post2) => {
@@ -180,7 +182,7 @@ export default {
   justify-content: flex-end;
   align-items: center;
   padding: 15px;
-  background-color: lightgray;
+  background-color: darkseagreen;
   border-radius: 10px;
   border: 1px solid teal;
 }
