@@ -20,7 +20,7 @@ app.use(
         secret: "secret",
         resave: false,
         saveUninitialized: true,
-        cookie: { maxAge: 60 * 60 * 1000 }, // 1 hour
+        cookie: { maxAge: 60 * 60 * 1000 },
     })
 );
 
@@ -29,6 +29,7 @@ app.use(passport.session());
 
 app.use(morgan('combined'));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const corsConfig = {
     origin: "http://localhost:8080",
@@ -43,7 +44,24 @@ app.use(cors(corsConfig));
 app.use('/', postsRouter);
 app.use('/', authRouter);
 
-authUser = (username, password, done) => {
+const errorHandler = (error, req, res, next) => {
+    let status = 500;
+    let message = 'Internal Sever Error!';
+
+    if (error.code && error.code === 11000) {
+        status = 403;
+        message = 'Post with that name already exists!'
+    }
+
+    if (error.errors) {
+        status = 403;
+        message = error.message;
+    }
+
+    res.status(status).send(message);
+}
+
+const authUser = (username, password, done) => {
     User.findOne({ username : username },function(err,user){
         return err
             ? done(err)
@@ -69,50 +87,7 @@ passport.deserializeUser((id, done) => {
     });
 })
 
-app.post('/auth/login', function(req, res, next) {
-    passport.authenticate('local', function (err, user, info) {
-        console.log('info:');
-        console.log(info);
-        if (err) {
-            return next(err);
-        }
-        if (!user) {
-            return res.status(403).send('Incorrect username or password!');
-        }
-
-        req.logIn(user, function (err) {
-            if (err) {
-                return next(err);
-            }
-            return res.send({ isAuth: true, user });
-        });
-
-    })(req, res, next);
-});
-
-app.get('/auth/authorization', (req, res) => {
-    console.log('authorization request:');
-
-    console.log('user:');
-    console.log(req.user);
-
-    console.log('isAuthenticated:');
-    console.log(req.isAuthenticated());
-
-    const user = req.isAuthenticated() ? req.user: null;
-    const obj = {
-        isAuth: req.isAuthenticated(),
-        user,
-    }
-
-    res.send(obj);
-})
-
-app.get('/auth/logout', function(req, res, next){
-    req.session.destroy(function (err) {
-        res.send('logout user');
-    });
-});
+app.use(errorHandler);
 
 const startServer = () => {
     app.listen(port, () => {

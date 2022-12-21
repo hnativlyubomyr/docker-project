@@ -81,7 +81,7 @@ export const auth = {
 
         async logOut({ state, commit }) {
             try {
-                await authService.logaut();
+                await authService.logout();
                 commit('setIsAuth', false);
                 commit('setUser', null);
             }

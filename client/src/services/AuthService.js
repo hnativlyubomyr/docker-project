@@ -13,7 +13,7 @@ export default {
       return Api().get('/auth/authorization');
     },
 
-    logaut() {
+    logout() {
         return Api().get('/auth/logout');
     }
 }
