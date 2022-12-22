@@ -48,6 +48,7 @@
 
     computed: {
       ...mapGetters('posts', ['validationTitleMessage']),
+      ...mapGetters('auth', ['user']),
     },
 
     data() {
@@ -82,7 +83,7 @@
         if (this.updatePost) {
           await this.updateExistPost({ ...post, _id: this.updatePost._id })
         } else {
-          await this.addNewPost(post);
+          await this.addNewPost({ ...post, user: this.user._id });
         }
 
         if (!this.validationTitleMessage) {

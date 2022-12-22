@@ -10,7 +10,7 @@
             v-model="authForm.name"
             id="user-name"
             placeholder="Name"
-            @input="authFormValid.name.isValid = true"
+            @input="clearValidMessage('name')"
         ></my-input>
         <div v-if="!authFormValid.name.isValid" class="valid-message">{{ authFormValid.name.message }}</div>
       </div>
@@ -21,7 +21,7 @@
             v-model="authForm.login"
             id="user-login"
             placeholder="Login"
-            @input="authFormValid.login.isValid = true"
+            @input="clearValidMessage('login')"
         ></my-input>
         <div v-if="!authFormValid.login.isValid" class="valid-message">{{ authFormValid.login.message }}</div>
       </div>
@@ -33,7 +33,7 @@
             id="user-password"
             type="password"
             placeholder="Password"
-            @input="authFormValid.password.isValid = true"
+            @input="clearValidMessage('password')"
         ></my-input>
         <div v-if="!authFormValid.password.isValid" class="valid-message">{{ authFormValid.password.message }}</div>
       </div>
@@ -45,11 +45,11 @@
             id="confirm-password"
             type="password"
             placeholder="Confirm Password"
-            @input="authFormValid.confirm.isValid = true"
+            @input="clearValidMessage('confirm')"
         ></my-input>
         <div v-if="!authFormValid.confirm.isValid" class="valid-message">{{ authFormValid.confirm.message }}</div>
       </div>
-
+      <div class="server-text-message valid-message">{{ errorMessage }}</div>
       <div class="auth-buttons">
         <my-button
             v-if="isRegister"
@@ -80,6 +80,8 @@
 <script>
 
 import { authValues } from "@/validators/validators";
+import {mapActions, mapGetters, mapMutations} from "vuex";
+import { navigation } from "@/router/dictionary";
 
 export default {
   props: {
@@ -90,6 +92,8 @@ export default {
   },
 
   computed: {
+    ...mapGetters('auth', ['isAuth', 'errorMessage']),
+
     isSignBtnDisabled() {
       const { login, password } = this.authForm;
       const { login: loginValid, password: passwordValid } = this.authFormValid;
@@ -98,14 +102,14 @@ export default {
       const isSomeEmpty = Object.values(signInObj).some(item => !item.length);
       const isFormInvalid = Object.values(signInObjValid).some(item => !item.isValid);
 
-      return isSomeEmpty || isFormInvalid;
+      return this.errorMessage || isSomeEmpty || isFormInvalid;
     },
 
     isCreateBtnDisabled() {
       const isSomeEmpty = Object.values(this.authForm).some(item => !item.length);
       const isFormInvalid = Object.values(this.authFormValid).some(item => !item.isValid);
 
-      return isSomeEmpty || isFormInvalid;
+      return isSomeEmpty || isFormInvalid
     }
 
   },
@@ -145,6 +149,14 @@ export default {
   },
 
   methods: {
+    ...mapActions('auth', ['createAccount', 'signIn']),
+    ...mapMutations('auth', ['setErrorMessage']),
+
+    clearValidMessage(prop) {
+      this.authFormValid[prop].isValid = true;
+      this.setErrorMessage('');
+    },
+
     isSignInFormValid() {
       let isValid = true;
 
@@ -193,17 +205,31 @@ export default {
       return this.authForm.password === this.authForm.confirm;
     },
 
-    handleSignIn() {
+    async handleSignIn() {
       if (!this.isSignInFormValid()) return;
 
-      // todo SignIn Action
+      const { login: username, password } = this.authForm;
+
+      await this.signIn({username, password });
+
+      if (this.isAuth) {
+        this.$router.push(navigation.posts.path);
+      }
     },
 
     handleRegister() {
       if (!this.isCreateAccountValid()) return;
 
-      // todo CreateAccount Action
+      const { name, login: username, password } = this.authForm;
+
+      this.createAccount({ name, username, password }).then(() => {
+        this.$router.push(navigation.login.path);
+      });
     }
+  },
+
+  mounted() {
+    this.setErrorMessage('');
   }
 }
 </script>
@@ -254,5 +280,9 @@ export default {
   margin-top: 5px;
   font-size: 18px;
   color: red;
+}
+
+.server-text-message {
+  margin-bottom: 20px;
 }
 </style>

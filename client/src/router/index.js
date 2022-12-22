@@ -35,22 +35,23 @@ const router = createRouter({
     history: createWebHistory(),
 });
 
-router.beforeEach((to, from, next) => {
-    const { isAuth } = store.state.auth;
+const isAuthenticated = async () => {
+    await store.dispatch('auth/authorization');
+
+    return store.state.auth.isAuth;
+}
+
+router.beforeEach(async (to, from, next) => {
+    let { isAuth } = store.state.auth;
+
+    isAuth = isAuth || await isAuthenticated();
 
     if (to.name === navigation.user.name && !isAuth) {
-        next({ name: navigation.login.name });
-        return;
+        return next({ name: navigation.login.name });
     }
 
-    if (to.name === navigation.login.name && isAuth) {
-        next({ name: navigation.posts.name });
-        return;
-    }
-
-    if (to.name === navigation.login.name && isAuth || to.name === navigation.register.name && isAuth) {
-        next({ name: navigation.posts.name });
-        return;
+    if ((to.name === navigation.login.name || to.name === navigation.register.name) && isAuth) {
+        return isAuth ? next({ name: navigation.posts.name }) : next();
     }
 
     next();

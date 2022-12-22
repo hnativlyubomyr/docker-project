@@ -11,6 +11,10 @@ const schemaPost = new mongoose.Schema({
     body: {
         type: String,
         required: true,
+    },
+    user: {
+        type: String,
+        required: true,
     }
 }, { versionKey:false })
 

@@ -1,6 +1,6 @@
 <template>
   <div class="user-info-container">
-    <div class="user-info">
+    <div v-if="user" class="user-info">
       <div class="user-title">User information:</div>
 
       <div class="user-text">Name: {{ user.name }}</div>
@@ -11,6 +11,7 @@
           color-button="red"
           class="logout-btn"
           data-delete
+          @click="handleLogout"
       >
         Logout
       </my-button>
@@ -20,11 +21,24 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import {mapActions, mapGetters} from "vuex";
+import { navigation } from "@/router/dictionary";
 
 export default {
   computed: {
-    ...mapGetters('auth', ['user']),
+    ...mapGetters('auth', ['user', 'isAuth']),
+  },
+
+  methods: {
+    ...mapActions('auth', ['logOut']),
+
+    async handleLogout() {
+      await this.logOut();
+
+      if (!this.isAuth) {
+        this.$router.push(navigation.posts.path);
+      }
+    }
   }
 }
 </script>
@@ -56,5 +70,4 @@ export default {
 .logout-btn {
   margin-top: 10px;
 }
-
 </style>
